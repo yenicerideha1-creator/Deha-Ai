@@ -4,16 +4,59 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deha AI</title>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #111827;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    .box {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 40px;
+    }
+
+    button {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      border: none;
+      background: white;
+      font-size: 55px;
+    }
+
+    #status {
+      margin-top: 25px;
+      font-size: 17px;
+      color: #d1d5db;
+    }
+  </style>
 </head>
+
 <body>
 
-  <h1>🤖 Deha AI</h1>
-  <p id="status">Bereit</p>
+  <div class="box">
+    <h1>Deha AI</h1>
 
-  <button id="speak">🎙️ Sprechen</button>
+    <button id="talk">🎙️</button>
+
+    <div id="status">Tippe zum Sprechen</div>
+  </div>
 
   <script>
-    const button = document.getElementById("speak");
+    const SERVER_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnTeKOoz9pDspdNUmPf1KFwcQ0xJtl0U6tqLrMD3JoYC1Lovh_PcC0RZabrIRev5mT_dIHtV6_JtLHQeYdLwg-Grbh5O1iJDS-ad0JmZtPnYlPOtwUqZcwIaOGPfWe_XAlN-RKw-RkhBYiXUqMY_u3nsxUoKtFG5TEDJlycMwU9Ph5hbWkEwL4-uuGyb4py2jzuGF1PEn2wHUyMYE0hYAHmgl-44FXKur6y_7V5ektOg44qDCX9Vedxa4VZlfRzJ7O0SrLNa1QgYBJ-oY_XEvwYVvFRGAA&lib=MHJjF9TH0qBv-lvZChkyvyreq7DmJknNU";
+
+    const button = document.getElementById("talk");
     const status = document.getElementById("status");
 
     const SpeechRecognition =
@@ -23,27 +66,61 @@
     if (!SpeechRecognition) {
       status.textContent = "Spracherkennung wird nicht unterstützt.";
     } else {
+
       const recognition = new SpeechRecognition();
 
       recognition.lang = "de-DE";
       recognition.continuous = false;
+      recognition.interimResults = false;
 
       button.onclick = () => {
         status.textContent = "🎙️ Ich höre zu...";
         recognition.start();
       };
 
-      recognition.onresult = (event) => {
+      recognition.onresult = async (event) => {
+
         const text = event.results[0][0].transcript;
 
-        status.textContent = "Du: " + text;
+        status.textContent = "🧠 Deha denkt...";
 
-        const answer =
-          "Ich habe dich verstanden. Ich bin Deha AI.";
+        try {
 
-        const speech = new SpeechSynthesisUtterance(answer);
-        speech.lang = "de-DE";
-        speechSynthesis.speak(speech);
+          const response = await fetch(SERVER_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "text/plain"
+            },
+            body: JSON.stringify({
+              text: text
+            })
+          });
+
+          const data = await response.json();
+
+          const answer =
+            data.candidates[0].content.parts[0].text;
+
+          status.textContent = "🔊 Deha antwortet...";
+
+          const speech =
+            new SpeechSynthesisUtterance(answer);
+
+          speech.lang = "de-DE";
+
+          speechSynthesis.speak(speech);
+
+          speech.onend = () => {
+            status.textContent = "Tippe zum Sprechen";
+          };
+
+        } catch (error) {
+
+          status.textContent =
+            "Deha konnte gerade nicht antworten.";
+
+          console.error(error);
+        }
       };
 
       recognition.onerror = () => {
