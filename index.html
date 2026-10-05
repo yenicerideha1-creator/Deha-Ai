@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deha AI</title>
+</head>
+<body>
+
+  <h1>🤖 Deha AI</h1>
+  <p id="status">Bereit</p>
+
+  <button id="speak">🎙️ Sprechen</button>
+
+  <script>
+    const button = document.getElementById("speak");
+    const status = document.getElementById("status");
+
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      status.textContent = "Spracherkennung wird nicht unterstützt.";
+    } else {
+      const recognition = new SpeechRecognition();
+
+      recognition.lang = "de-DE";
+      recognition.continuous = false;
+
+      button.onclick = () => {
+        status.textContent = "🎙️ Ich höre zu...";
+        recognition.start();
+      };
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+
+        status.textContent = "Du: " + text;
+
+        const answer =
+          "Ich habe dich verstanden. Ich bin Deha AI.";
+
+        const speech = new SpeechSynthesisUtterance(answer);
+        speech.lang = "de-DE";
+        speechSynthesis.speak(speech);
+      };
+
+      recognition.onerror = () => {
+        status.textContent =
+          "Mikrofon konnte nicht verwendet werden.";
+      };
+    }
+  </script>
+
+</body>
+</html>
